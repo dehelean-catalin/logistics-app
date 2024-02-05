@@ -4,11 +4,14 @@ import app.logisctics.dao.dto.CreateOrderDto;
 import app.logisctics.dao.dto.OrderDto;
 import org.apache.coyote.BadRequestException;
 
+import java.text.ParseException;
 import java.util.List;
 
 public interface OrderService {
-    public List<OrderDto> getAllOrders();
-    public List<OrderDto> createOrders(List<CreateOrderDto> createOrderDtos) throws BadRequestException;
+    List<OrderDto> getAllOrdersByDeliveryDateAndDestination(String deliveryDate,
+                                                            String destination) throws ParseException;
 
-    public void cancelOrders(List<Long> orderIds);
+    List<OrderDto> createOrders(List<CreateOrderDto> createOrderDtos) throws BadRequestException;
+
+    void cancelOrders(List<Long> orderIds);
 }

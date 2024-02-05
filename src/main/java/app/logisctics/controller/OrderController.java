@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.ParseException;
 import java.util.List;
 
 @RestController
@@ -17,10 +18,12 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    @GetMapping
-    public List<OrderDto> getAllOrders(){
-        return orderService.getAllOrders();
+    @GetMapping("/status")
+    public List<OrderDto> getAllOrdersByDeliveryDateAndDestination(@RequestParam String date,
+                                       @RequestParam String destination) throws ParseException {
+        return orderService.getAllOrdersByDeliveryDateAndDestination(date, destination);
     }
+
     @PostMapping("/add")
     public List<OrderDto> createOrders(@Valid @RequestBody List<CreateOrderDto> createOrderDtos) throws BadRequestException {
         return orderService.createOrders(createOrderDtos);

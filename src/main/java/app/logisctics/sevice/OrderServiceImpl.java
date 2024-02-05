@@ -13,25 +13,32 @@ import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@RequiredArgsConstructor
+
 @Service
+@RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService{
 
     private final OrderRepository orderRepository;
     private final DestinationRepository destinationRepository;
 
     @Override
-    public List<OrderDto> getAllOrders() {
+    public List<OrderDto> getAllOrdersByDeliveryDateAndDestination(String date, String destination) {
+        long deliveryDate = convertDateStringToMills(date);
 
-        List<Order> orders = orderRepository.findAll();
-        return OrderConverter.modelListToDtoList(orders);
+        Optional<Destination> optionalDestination = destinationRepository.findByName(destination);
+
+        if(optionalDestination.isEmpty()){
+           return OrderConverter.modelListToDtoList(orderRepository.findAllByDeliveryDate(deliveryDate));
+        }
+        System.out.println(deliveryDate);
+        return OrderConverter.modelListToDtoList(orderRepository.findAllByDeliveryDateAndDestination(deliveryDate, optionalDestination.get()));
     }
 
     @Override
@@ -43,10 +50,8 @@ public class OrderServiceImpl implements OrderService{
 
         List<Order> ordersToSave = new ArrayList<>();
 
-        createOrderDtos.forEach((order)->  {
-           ordersToSave.add(OrderConverter.createDtoToModel(order.getDeliveryDate(),
-                   destinationMap.get(order.getDestinationId())));
-        });
+        createOrderDtos.forEach((order)-> ordersToSave.add(OrderConverter.createDtoToModel(order.getDeliveryDate(),
+                destinationMap.get(order.getDestinationId()))));
 
         return OrderConverter.modelListToDtoList(orderRepository.saveAll(ordersToSave));
     }
@@ -94,5 +99,15 @@ public class OrderServiceImpl implements OrderService{
 
     private boolean canCancelOrder(OrderStatus orderStatus){
         return orderStatus == OrderStatus.NEW || orderStatus== OrderStatus.DELIVERING;
+    }
+
+    private long convertDateStringToMills(String date){
+        if(date == null){
+            return LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
+        }
+
+        LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+
+        return localDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
     }
 }
