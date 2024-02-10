@@ -20,6 +20,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static app.logisctics.dao.converter.OrderConverter.modelListToDtoList;
+
 
 @Service
 @RequiredArgsConstructor
@@ -29,16 +31,12 @@ public class OrderServiceImpl implements OrderService{
     private final DestinationRepository destinationRepository;
 
     @Override
-    public List<OrderDto> getAllOrdersByDeliveryDateAndDestination(String date, String destination) {
+    public List<OrderDto> getAllOrdersByDeliveryDateAndDestination(String date,
+                                                                   String destinationName) {
         long deliveryDate = convertDateStringToMills(date);
 
-        Optional<Destination> optionalDestination = destinationRepository.findByName(destination);
-
-        if(optionalDestination.isEmpty()){
-           return OrderConverter.modelListToDtoList(orderRepository.findAllByDeliveryDate(deliveryDate));
-        }
-        System.out.println(deliveryDate);
-        return OrderConverter.modelListToDtoList(orderRepository.findAllByDeliveryDateAndDestination(deliveryDate, optionalDestination.get()));
+        return modelListToDtoList(orderRepository.findAllByDeliveryDateAndDestination_NameContainingIgnoreCase(deliveryDate,
+                destinationName));
     }
 
     @Override
@@ -50,27 +48,19 @@ public class OrderServiceImpl implements OrderService{
 
         List<Order> ordersToSave = new ArrayList<>();
 
-        createOrderDtos.forEach((order)-> ordersToSave.add(OrderConverter.createDtoToModel(order.getDeliveryDate(),
-                destinationMap.get(order.getDestinationId()))));
+        createOrderDtos.forEach((order)->
+                ordersToSave.add(OrderConverter.createDtoToModel(order.getDeliveryDate(),
+                destinationMap.get(order.getDestinationId()))
+                )
+        );
 
-        return OrderConverter.modelListToDtoList(orderRepository.saveAll(ordersToSave));
+        return modelListToDtoList(orderRepository.saveAll(ordersToSave));
     }
 
     @Override
     public void cancelOrders(List<Long> orderIds) {
-        List<Order> orders = orderRepository.findAllById(orderIds);
-
-        for (Order order: orders){
-            if(canCancelOrder(order.getOrderStatus())){
-                order.setOrderStatus(OrderStatus.CANCELED);
-                order.setLastUpdated(System.currentTimeMillis());
-            }
-        }
-
-        orderRepository.saveAll(orders);
-
+        orderRepository.updateStatus(orderIds, null,  OrderStatus.CANCELED);
     }
-
 
     private void validateCreateOrderDto(List<CreateOrderDto> createOrderDtos,
                                         Set<Long> destinationIds) throws BadRequestException {
@@ -95,10 +85,6 @@ public class OrderServiceImpl implements OrderService{
             }
 
         }
-    }
-
-    private boolean canCancelOrder(OrderStatus orderStatus){
-        return orderStatus == OrderStatus.NEW || orderStatus== OrderStatus.DELIVERING;
     }
 
     private long convertDateStringToMills(String date){

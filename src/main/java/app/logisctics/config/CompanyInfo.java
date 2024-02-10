@@ -10,10 +10,15 @@ import java.time.ZoneOffset;
 @Getter
 public class CompanyInfo {
 
-    private LocalDate currentDate = LocalDate.of(2021, 12, 16);
+    private LocalDate currentDate = LocalDate.of(2021, 12, 14);
     private Long profit;
 
     public Long getCurrentDateAsLong(){
         return this.currentDate.atStartOfDay().toEpochSecond(ZoneOffset.UTC) * 1000;
+    }
+
+    public LocalDate incrementDateByOne(){
+         currentDate = currentDate.plusDays(1);
+         return currentDate;
     }
 }
