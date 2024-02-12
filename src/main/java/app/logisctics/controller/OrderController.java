@@ -12,6 +12,7 @@ import java.text.ParseException;
 import java.util.List;
 
 @RestController
+@CrossOrigin
 @RequestMapping("/orders")
 @RequiredArgsConstructor
 public class OrderController {
@@ -20,7 +21,7 @@ public class OrderController {
 
     @GetMapping("/status")
     public List<OrderDto> getAllOrdersByDeliveryDateAndDestination(@RequestParam String date,
-                                       @RequestParam String destination) throws ParseException {
+                                       @RequestParam(defaultValue = "") String destination) throws ParseException {
         return orderService.getAllOrdersByDeliveryDateAndDestination(date, destination);
     }
 

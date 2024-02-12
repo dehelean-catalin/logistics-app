@@ -1,6 +1,5 @@
 package app.logisctics.repository;
 
-import app.logisctics.dao.model.Destination;
 import app.logisctics.dao.model.Order;
 import app.logisctics.dao.model.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,9 +22,9 @@ public interface OrderRepository extends JpaRepository<Order,Long> {
         this.save(order);
     }
 
-    default void updateStatus(List<Long> orderIds, OrderStatus initialStatus,
+    default int updateStatus(List<Long> orderIds, OrderStatus initialStatus,
                               OrderStatus newStatus){
-
+        int updateCount = 0;
         List<Order> orders = this.findAllById(orderIds).stream()
                 .filter(order -> order.getOrderStatus() == initialStatus || isNull(initialStatus))
                 .toList();
@@ -34,15 +33,15 @@ public interface OrderRepository extends JpaRepository<Order,Long> {
             if(canUpdateStatus(order.getOrderStatus(), newStatus)){
                 order.setOrderStatus(newStatus);
                 order.setLastUpdated(System.currentTimeMillis());
+                updateCount++;
             }
         }
 
         this.saveAll(orders);
+        return updateCount;
     }
 
     default boolean canUpdateStatus(OrderStatus initialStatus, OrderStatus newStatus){
-
         return OrderStatus.transitions.get(initialStatus).contains(newStatus);
-
     }
 }

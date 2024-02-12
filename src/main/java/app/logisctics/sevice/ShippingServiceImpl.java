@@ -13,7 +13,6 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.*;
@@ -24,6 +23,7 @@ import static java.util.stream.Collectors.*;
 public class ShippingServiceImpl implements ShippingService{
     private final OrderRepository orderRepository;
     private final CompanyInfo companyInfo;
+    private final ShippingManager shippingManager;
     @Override
     public void startNewDay() {
         LocalDate newDay = companyInfo.incrementDateByOne();
@@ -45,6 +45,10 @@ public class ShippingServiceImpl implements ShippingService{
         String destinationNames = ordersMap.keySet().stream()
                 .map(Destination::getName)
                 .collect(Collectors.joining(", "));
+
+        for (Map.Entry<Destination, List<Long>> entry : ordersMap.entrySet()) {
+            shippingManager.deliveryToDestination(entry.getKey(), entry.getValue());
+        }
 
         log.info("Today we will be delivering to: " + destinationNames);
     }

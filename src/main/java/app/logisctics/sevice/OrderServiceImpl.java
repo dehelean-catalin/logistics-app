@@ -13,9 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -29,11 +26,12 @@ public class OrderServiceImpl implements OrderService{
 
     private final OrderRepository orderRepository;
     private final DestinationRepository destinationRepository;
+    private final CompanyInfo companyInfo;
 
     @Override
     public List<OrderDto> getAllOrdersByDeliveryDateAndDestination(String date,
                                                                    String destinationName) {
-        long deliveryDate = convertDateStringToMills(date);
+        long deliveryDate = companyInfo.getLocalDateStringAsLong(date);
 
         return modelListToDtoList(orderRepository.findAllByDeliveryDateAndDestination_NameContainingIgnoreCase(deliveryDate,
                 destinationName));
@@ -85,15 +83,5 @@ public class OrderServiceImpl implements OrderService{
             }
 
         }
-    }
-
-    private long convertDateStringToMills(String date){
-        if(date == null){
-            return LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
-        }
-
-        LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-
-        return localDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
     }
 }

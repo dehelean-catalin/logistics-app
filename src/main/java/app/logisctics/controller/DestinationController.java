@@ -1,9 +1,7 @@
 package app.logisctics.controller;
 
 import app.logisctics.dao.dto.DestinationDto;
-import app.logisctics.dao.model.Destination;
 import app.logisctics.sevice.DestinationService;
-import app.logisctics.sevice.DestinationServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
@@ -13,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/destinations")
+@CrossOrigin
 @RequiredArgsConstructor
 public class DestinationController {
 
