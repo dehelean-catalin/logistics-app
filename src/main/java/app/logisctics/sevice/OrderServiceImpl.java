@@ -44,13 +44,11 @@ public class OrderServiceImpl implements OrderService{
 
         validateCreateOrderDto(createOrderDtos, destinationMap.keySet());
 
-        List<Order> ordersToSave = new ArrayList<>();
-
-        createOrderDtos.forEach((order)->
-                ordersToSave.add(OrderConverter.createDtoToModel(order.getDeliveryDate(),
-                destinationMap.get(order.getDestinationId()))
+        List<Order> ordersToSave = createOrderDtos.stream()
+                .map(order ->
+                        OrderConverter.createDtoToModel(order.getDeliveryDate(), destinationMap.get(order.getDestinationId()))
                 )
-        );
+                .toList();
 
         return modelListToDtoList(orderRepository.saveAll(ordersToSave));
     }
