@@ -1,5 +1,6 @@
 package app.logisctics.sevice;
 
+import app.logisctics.cache.DestinationCache;
 import app.logisctics.dao.converter.DestinationConverter;
 import app.logisctics.dao.dto.DestinationDto;
 import app.logisctics.dao.model.Destination;
@@ -11,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,18 +20,20 @@ import java.util.Optional;
 public class DestinationServiceImpl implements DestinationService{
 
     private final DestinationRepository destinationRepository;
+    private final DestinationCache destinationCache;
     private final OrderRepository orderRepository;
 
     @Override
     public List<DestinationDto> getAllDestinations() {
-        List<Destination> destinations = destinationRepository.findAll();
+        List<Destination> destinations = destinationCache.findAll();
 
         return DestinationConverter.modelListToDtoList(destinations);
     }
 
+//    @Cacheable("destinations")
     @Override
     public DestinationDto getDestinationById(Long id) throws DestinationNotFoundException {
-        Destination destination = destinationRepository.findById(id)
+        Destination destination = destinationCache.findById(id)
                 .orElseThrow(()-> new DestinationNotFoundException(id));
 
         return DestinationConverter.modelToDto(destination);
@@ -43,7 +45,8 @@ public class DestinationServiceImpl implements DestinationService{
             throw new BadRequestException("Id should not be provided");
         }
 
-        Optional<Destination> optionalDestination = destinationRepository.findByName(destinationDto.getName());
+        Optional<Destination> optionalDestination =
+                destinationCache.findByName(destinationDto.getName());
 
         if(optionalDestination.isPresent()){
             Destination destination = optionalDestination.get();
@@ -53,16 +56,21 @@ public class DestinationServiceImpl implements DestinationService{
 
         Destination destination = DestinationConverter.dtoToModel(destinationDto);
 
-        return destinationRepository.save(destination).getId();
+        Destination savedDestination = destinationRepository.save(destination);
+        destinationCache.save(savedDestination);
+
+        return savedDestination.getId();
     }
 
+//    @CachePut(value = "destinations", key = "#destinationDto.id")
     @Override
-    public void updateDestination(DestinationDto destinationDto) throws BadRequestException {
+    public DestinationDto updateDestination(DestinationDto destinationDto) throws BadRequestException {
         if(destinationDto.getId() != null){
             throw new BadRequestException("Id should not be provided");
         }
 
-        Optional<Destination> optionalDestination = destinationRepository.findByName(destinationDto.getName());
+        Optional<Destination> optionalDestination =
+                destinationCache.findByName(destinationDto.getName());
 
         if(optionalDestination.isPresent()){
             Destination destination = optionalDestination.get();
@@ -72,17 +80,23 @@ public class DestinationServiceImpl implements DestinationService{
 
         Destination destination = DestinationConverter.dtoToModel(destinationDto);
 
-        destinationRepository.save(destination);
+        Destination savedDestination = destinationRepository.save(destination);
+        destinationCache.save(savedDestination);
+
+        return DestinationConverter.modelToDto(savedDestination);
     }
 
+//    @CacheEvict("destinations")
     @Override
     public void deleteDestination(Long id) throws DestinationNotFoundException {
 
-        Destination destination = destinationRepository.findById(id)
+        Destination destination = destinationCache.findById(id)
                 .orElseThrow(()-> new DestinationNotFoundException(id));
 
         orderRepository.findAllByDestinationId(id).forEach(orderRepository::archiveOrder);
 
         destinationRepository.delete(destination);
+        destinationCache.delete(destination.getId());
+
     }
 }

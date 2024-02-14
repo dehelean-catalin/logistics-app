@@ -45,8 +45,8 @@ public class DestinationController {
     }
 
     @PutMapping
-    public void updateDestination(@Valid @RequestBody DestinationDto destinationDto) throws BadRequestException {
-        destinationService.updateDestination(destinationDto);
+    public DestinationDto updateDestination(@Valid @RequestBody DestinationDto destinationDto) throws BadRequestException {
+       return destinationService.updateDestination(destinationDto);
     }
 
     @DeleteMapping("/{id}")

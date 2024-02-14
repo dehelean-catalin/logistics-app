@@ -1,5 +1,6 @@
 package app.logisctics.sevice;
 
+import app.logisctics.cache.DestinationCache;
 import app.logisctics.config.CompanyInfo;
 import app.logisctics.dao.converter.OrderConverter;
 import app.logisctics.dao.dto.CreateOrderDto;
@@ -7,7 +8,6 @@ import app.logisctics.dao.dto.OrderDto;
 import app.logisctics.dao.model.Destination;
 import app.logisctics.dao.model.Order;
 import app.logisctics.dao.model.OrderStatus;
-import app.logisctics.repository.DestinationRepository;
 import app.logisctics.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
@@ -25,7 +25,7 @@ import static app.logisctics.dao.converter.OrderConverter.modelListToDtoList;
 public class OrderServiceImpl implements OrderService{
 
     private final OrderRepository orderRepository;
-    private final DestinationRepository destinationRepository;
+    private final DestinationCache destinationCache;
     private final CompanyInfo companyInfo;
 
     @Override
@@ -39,7 +39,7 @@ public class OrderServiceImpl implements OrderService{
 
     @Override
     public List<OrderDto> createOrders(List<CreateOrderDto> createOrderDtos) throws BadRequestException {
-        Map<Long, Destination> destinationMap = destinationRepository.findAll().stream()
+        Map<Long, Destination> destinationMap = destinationCache.findAll().stream()
                 .collect(Collectors.toMap(Destination::getId, Function.identity()));
 
         validateCreateOrderDto(createOrderDtos, destinationMap.keySet());
